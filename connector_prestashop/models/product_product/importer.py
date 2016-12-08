@@ -52,7 +52,7 @@ class ProductCombinationImporter(PrestashopImporter):
         super(ProductCombinationImporter, self)._after_import(binding)
         self.import_supplierinfo(binding)
 
-    def set_variant_images(self, combinations):
+    def set_variant_images(self, combinations, **kwargs):
         backend_adapter = self.unit_for(
             PrestaShopCRUDAdapter, 'prestashop.product.combination')
         for combination in combinations:
