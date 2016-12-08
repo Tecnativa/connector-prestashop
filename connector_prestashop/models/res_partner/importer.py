@@ -122,12 +122,16 @@ class ResPartnerImporter(PrestashopImporter):
         super(ResPartnerImporter, self)._after_import(binding)
         binder = self.binder_for()
         ps_id = binder.to_backend(binding)
+        self._dealy_partner_address(ps_id)
+
+    def _dealy_partner_address(self, id_customer, **kwargs):
         import_batch.delay(
             self.session,
             'prestashop.address',
             self.backend_record.id,
-            filters={'filter[id_customer]': '%d' % (ps_id,)},
+            filters={'filter[id_customer]': '%d' % (id_customer,)},
             priority=10,
+            **kwargs
         )
 
 
