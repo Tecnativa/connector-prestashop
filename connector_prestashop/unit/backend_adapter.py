@@ -96,8 +96,10 @@ class PrestaShopCRUDAdapter(CRUDAdapter):
         :type environment: :py:class:`connector.connector.ConnectorEnvironment`
         """
         super(PrestaShopCRUDAdapter, self).__init__(environment)
+        location = (environment.location or
+                    self.backend_record.location.encode())
         self.prestashop = PrestaShopLocation(
-            self.backend_record.location.encode(),
+            location,
             self.backend_record.webservice_key
         )
         self.client = PrestaShopWebServiceDict(
