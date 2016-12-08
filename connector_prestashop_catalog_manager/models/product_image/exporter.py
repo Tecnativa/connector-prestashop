@@ -35,7 +35,7 @@ class ProductImageExport(PrestashopExporter):
         res = super(ProductImageExport, self)._update(record)
         return res['prestashop']['image']['id']
 
-    def _run(self, fields=None):
+    def _run(self, fields=None, **kwargs):
         """ Flow of the synchronization, implemented in inherited classes"""
         assert self.binding_id
         assert self.binding
