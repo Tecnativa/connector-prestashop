@@ -70,10 +70,15 @@ class ProductTemplateExport(TranslationPrestashopExporter):
         }
         binding = ps_categ_obj.with_context(
             connector_no_export=True).create(res)
+        self._delay_export_category(binding)
+
+    def _delay_export_category(self, binding, **kwargs):
         export_record(
             self.session,
             'prestashop.product.category',
-            binding.id)
+            binding.id,
+            **kwargs
+        )
 
     def _parent_length(self, categ):
         if not categ.parent_id:
@@ -123,11 +128,16 @@ class ProductTemplateExport(TranslationPrestashopExporter):
                     })
             # If a template has been modified then always update PrestaShop
             # combinations
-            export_record.delay(
-                self.session,
-                'prestashop.product.combination',
-                combination_ext_id.id, priority=50,
-                eta=timedelta(seconds=20))
+            self._delay_export_combination(combination_ext_id)
+
+    def _delay_export_combination(self, combination_ext_id, **kwargs):
+        export_record.delay(
+            self.session,
+            'prestashop.product.combination',
+            combination_ext_id.id, priority=50,
+            eta=timedelta(seconds=20),
+            **kwargs
+        )
 
     def _not_in_variant_images(self, image):
         images = []
@@ -148,10 +158,16 @@ class ProductTemplateExport(TranslationPrestashopExporter):
                             'backend_id': self.backend_record.id,
                             'odoo_id': image.id,
                         })
-                    export_record.delay(
-                        self.session,
-                        'prestashop.product.image',
-                        image_ext_id.id, priority=15)
+                    self._delay_export_image(image_ext_id)
+
+    def _delay_export_image(self, image, **kwargs):
+        export_record.delay(
+            self.session,
+            'prestashop.product.image',
+            image.id,
+            priority=15,
+            **kwargs
+        )
 
     def update_quantities(self):
         if len(self.binding.product_variant_ids) == 1:
