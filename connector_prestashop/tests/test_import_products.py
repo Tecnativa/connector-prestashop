@@ -16,7 +16,7 @@ from openerp.addons.connector_prestashop.models.\
         import_products
     )
 
-from .common import recorder, PrestashopTransactionCase
+from .common import recorder, PrestashopTransactionCase, assert_no_job_delayed
 
 
 ExpectedProductCategory = namedtuple(
@@ -31,7 +31,7 @@ ExpectedTemplate = namedtuple(
 
 ExpectedVariant = namedtuple(
     'ExpectedVariant',
-    'default_code standard_price display_name'
+    'default_code standard_price attribute_value_ids'
 )
 
 
@@ -76,6 +76,7 @@ class TestImportProduct(PrestashopTransactionCase):
         self.patch_delay_set_image.stop()
 
     @freeze_time('2016-09-13 00:00:00')
+    @assert_no_job_delayed
     def test_import_products(self):
         from_date = '2016-09-01 00:00:00'
         self.backend_record.import_products_since = from_date
@@ -91,9 +92,10 @@ class TestImportProduct(PrestashopTransactionCase):
             )
 
     @freeze_time('2016-09-13 00:00:00')
+    @assert_no_job_delayed
     def test_import_products_batch(self):
         from_date = '2016-09-01 00:00:00'
-        self.backend_record.import_res_partner_from_date = from_date
+        self.backend_record.import_products_since = from_date
         record_job_path = ('openerp.addons.connector_prestashop.unit'
                            '.importer.import_record')
         # execute the batch job directly and replace the record import
@@ -125,6 +127,7 @@ class TestImportProduct(PrestashopTransactionCase):
 
             self.assertEqual(18, import_record_mock.delay.call_count)
 
+    @assert_no_job_delayed
     def test_import_product_record_category(self):
         """ Import a product category """
         with recorder.use_cassette('test_import_product_category_record_1'):
@@ -144,6 +147,7 @@ class TestImportProduct(PrestashopTransactionCase):
 
         self.assert_records(expected, binding)
 
+    @assert_no_job_delayed
     def test_import_product_record(self):
         """ Import a product """
         # product 1 is assigned to categories 1-5 on PrestaShop
@@ -180,36 +184,52 @@ class TestImportProduct(PrestashopTransactionCase):
 
         variants = binding.product_variant_ids
 
+        PSValue = self.env['prestashop.product.combination.option.value']
+        value_s = PSValue.search([('backend_id', '=', self.backend_record.id),
+                                  ('name', '=', 'S')]).odoo_id
+        value_m = PSValue.search([('backend_id', '=', self.backend_record.id),
+                                  ('name', '=', 'M')]).odoo_id
+        value_l = PSValue.search([('backend_id', '=', self.backend_record.id),
+                                  ('name', '=', 'L')]).odoo_id
+        value_orange = PSValue.search(
+            [('backend_id', '=', self.backend_record.id),
+             ('name', '=', 'Orange')]
+        ).odoo_id
+        value_blue = PSValue.search(
+            [('backend_id', '=', self.backend_record.id),
+             ('name', '=', 'Blue')]
+        ).odoo_id
+
         expected_variants = [
             ExpectedVariant(
                 default_code='1_1',
                 standard_price=4.95,
-                display_name='[1_1] Faded Short Sleeves T-shirt (S, Orange)',
+                attribute_value_ids=value_s + value_orange,
             ),
             ExpectedVariant(
                 default_code='1_2',
                 standard_price=4.95,
-                display_name='[1_2] Faded Short Sleeves T-shirt (S, Blue)',
+                attribute_value_ids=value_s + value_blue,
             ),
             ExpectedVariant(
                 default_code='1_3',
                 standard_price=4.95,
-                display_name='[1_3] Faded Short Sleeves T-shirt (M, Orange)',
+                attribute_value_ids=value_m + value_orange,
             ),
             ExpectedVariant(
                 default_code='1_4',
                 standard_price=4.95,
-                display_name='[1_4] Faded Short Sleeves T-shirt (Blue, M)',
+                attribute_value_ids=value_m + value_blue,
             ),
             ExpectedVariant(
                 default_code='1_5',
                 standard_price=4.95,
-                display_name='[1_5] Faded Short Sleeves T-shirt (Orange, L)',
+                attribute_value_ids=value_l + value_orange,
             ),
             ExpectedVariant(
                 default_code='1_6',
                 standard_price=4.95,
-                display_name='[1_6] Faded Short Sleeves T-shirt (L, Blue)',
+                attribute_value_ids=value_l + value_blue,
             ),
         ]
 
