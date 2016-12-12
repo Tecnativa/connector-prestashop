@@ -249,14 +249,15 @@ class PrestashopBackend(models.Model):
             'product_option_value': 'product_option_value',
             'category': 'category',
             'image': 'image',
-            'order_slip': 'order_slips',
-            'order_slip_detail': 'order_slip_details',
+            'order_slip': 'order_slip',
+            'order_slip_detail': 'order_slip_detail',
             'group': 'group',
-            'order_row': 'order_rows',
+            'order_row': 'order_row',
             'tax': 'taxes',
             'combinations': 'combination',
             'product_features': 'product_feature',
             'tag': 'tag',
+            'messages': 'customer_messages',
         },
     }
 

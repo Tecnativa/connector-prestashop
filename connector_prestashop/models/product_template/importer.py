@@ -409,8 +409,8 @@ class TemplateRecordImport(TranslatableRecordImporter):
         prestashop_record = self._get_prestashop_data()
         associations = prestashop_record.get('associations', {})
 
-        combinations = associations.get('combinations', {}).get(
-            'combinations', [])
+        ps_key = self.backend_record.get_version_ps_key('combinations')
+        combinations = associations.get('combinations', {}).get(ps_key, [])
 
         if not isinstance(combinations, list):
             combinations = [combinations]
