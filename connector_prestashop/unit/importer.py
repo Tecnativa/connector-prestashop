@@ -15,7 +15,6 @@ from openerp.addons.connector.exception import (
     RetryableJobError,
     FailedJobError,
 )
-from ..connector import get_environment
 
 
 _logger = logging.getLogger(__name__)
@@ -49,7 +48,8 @@ class PrestashopImporter(Importer):
         return
 
     def _import_dependency(self, prestashop_id, binding_model,
-                           importer_class=None, always=False):
+                           importer_class=None, always=False,
+                           **kwargs):
         """
         Import a dependency. The importer class is a subclass of
         ``PrestashopImporter``. A specific class can be defined.
@@ -68,6 +68,7 @@ class PrestashopImporter(Importer):
                        it is still skipped if it has not been modified on
                        PrestaShop
         :type always: boolean
+        :param kwargs: additional keyword arguments are passed to the importer
         """
         if not prestashop_id:
             return
@@ -76,7 +77,7 @@ class PrestashopImporter(Importer):
         binder = self.binder_for(binding_model)
         if always or not binder.to_odoo(prestashop_id):
             importer = self.unit_for(importer_class, model=binding_model)
-            importer.run(prestashop_id)
+            importer.run(prestashop_id, **kwargs)
 
     def _map_data(self):
         """ Returns an instance of
@@ -104,6 +105,12 @@ class PrestashopImporter(Importer):
 
     def _create_context(self):
         return {'connector_no_export': True}
+
+    def _create_data(self, map_record):
+        return map_record.values(for_create=True)
+
+    def _update_data(self, map_record):
+        return map_record.values()
 
     def _create(self, data):
         """ Create the OpenERP record """
@@ -163,9 +170,11 @@ class PrestashopImporter(Importer):
                     cr.rollback()
                     raise
                 else:
-                    cr.commit()
+                    # Despite what pylint says, this a perfectly valid
+                    # commit (in a new cursor). Disable the warning.
+                    cr.commit()  # pylint: disable=invalid-commit
 
-    def run(self, prestashop_id):
+    def run(self, prestashop_id, **kwargs):
         """ Run the synchronization
 
         :param prestashop_id: identifier of the record on PrestaShop
@@ -180,7 +189,8 @@ class PrestashopImporter(Importer):
         # Keep a lock on this import until the transaction is committed
         self.advisory_lock_or_retry(lock_name,
                                     retry_seconds=RETRY_ON_ADVISORY_LOCK)
-        self.prestashop_record = self._get_prestashop_data()
+        if not self.prestashop_record:
+            self.prestashop_record = self._get_prestashop_data()
         binding = self._get_binding()
         if not binding:
             with self.do_in_new_connector_env() as new_connector_env:
@@ -238,9 +248,9 @@ class PrestashopImporter(Importer):
         # import the missing linked resources
         self._import_dependencies()
 
-        self._import(binding)
+        self._import(binding, **kwargs)
 
-    def _import(self, binding):
+    def _import(self, binding, **kwargs):
         """ Import the external record.
 
         Can be inherited to modify for instance the session
@@ -251,9 +261,9 @@ class PrestashopImporter(Importer):
         map_record = self._map_data()
 
         if binding:
-            record = map_record.values()
+            record = self._update_data(map_record)
         else:
-            record = map_record.values(for_create=True)
+            record = self._create_data(map_record)
 
         # special check on data before import
         self._validate_data(record)
@@ -314,6 +324,7 @@ class AddCheckpoint(ConnectorUnit):
     def run(self, binding_id):
         record = self.model.browse(binding_id)
         self.backend_record.add_checkpoint(
+            session=self.session,
             model=record._model._name,
             record_id=record.id,
         )
@@ -339,7 +350,7 @@ class DirectBatchImporter(BatchImporter):
 
 class DelayedBatchImporter(BatchImporter):
     """ Delay import of the records """
-    _model_name = []
+    _model_name = None
 
     def _import_record(self, record, **kwargs):
         """ Delay the import of the records"""
@@ -450,7 +461,7 @@ class TranslatableRecordImporter(PrestashopImporter):
         """
         return self.mapper.map_record(self.main_lang_data)
 
-    def _import(self, binding):
+    def _import(self, binding, **kwargs):
         """ Import the external record.
 
         Can be inherited to modify for instance the session
@@ -474,20 +485,26 @@ class TranslatableRecordImporter(PrestashopImporter):
         """ Hook called at the end of the import """
         for lang_code, lang_record in self.other_langs_data.iteritems():
             map_record = self.mapper.map_record(lang_record)
-            binding.with_context(lang=lang_code).write(map_record.values())
+            binding.with_context(
+                lang=lang_code,
+                connector_no_export=True,
+            ).write(map_record.values())
 
 
 @job(default_channel='root.prestashop')
 def import_batch(session, model_name, backend_id, filters=None, **kwargs):
     """ Prepare a batch import of records from PrestaShop """
-    env = get_environment(session, model_name, backend_id)
+    backend = session.env['prestashop.backend'].browse(backend_id)
+    env = backend.get_environment(model_name, session=session)
     importer = env.get_connector_unit(BatchImporter)
     importer.run(filters=filters, **kwargs)
 
 
 @job(default_channel='root.prestashop')
-def import_record(session, model_name, backend_id, prestashop_id):
+def import_record(
+        session, model_name, backend_id, prestashop_id, **kwargs):
     """ Import a record from PrestaShop """
-    env = get_environment(session, model_name, backend_id)
+    backend = session.env['prestashop.backend'].browse(backend_id)
+    env = backend.get_environment(model_name, session=session)
     importer = env.get_connector_unit(PrestashopImporter)
-    importer.run(prestashop_id)
+    importer.run(prestashop_id, **kwargs)

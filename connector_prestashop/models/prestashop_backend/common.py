@@ -4,9 +4,7 @@
 from datetime import datetime
 import pytz
 
-from openerp import models, fields, api
-from openerp.tools import DEFAULT_SERVER_DATETIME_FORMAT
-
+from openerp.addons.connector.connector import ConnectorEnvironment
 from openerp.addons.connector.session import ConnectorSession
 from ...unit.direct_binder import DirectBinder
 from ...unit.importer import import_batch, import_record
@@ -22,6 +20,9 @@ from ..product_supplierinfo.importer import import_suppliers
 from ..account_invoice.importer import import_refunds
 from ..product_template.importer import import_products
 from ..sale_order.importer import import_orders_since
+
+from openerp import models, fields, api
+from openerp.tools import DEFAULT_SERVER_DATETIME_FORMAT
 
 
 class PrestashopBackend(models.Model):
@@ -40,7 +41,7 @@ class PrestashopBackend(models.Model):
             ('1.5', '< 1.6.0.9'),
             ('1.6.0.9', '1.6.0.9 - 1.6.0.10'),
             ('1.6.0.11', '>= 1.6.0.11'),
-            ('1.6.1.12', '>= 1.6.1.12'),
+            ('1.6.1.2', '>= 1.6.1.2'),
         ]
     version = fields.Selection(
         selection='_select_versions',
@@ -259,6 +260,13 @@ class PrestashopBackend(models.Model):
         },
     }
 
+    @api.multi
+    def get_environment(self, model_name, session=None):
+        self.ensure_one()
+        if not session:
+            session = ConnectorSession.from_env(self.env)
+        return ConnectorEnvironment(self, session, model_name)
+    
     def get_version_ps_key(self, key):
         if self.version in ['1.6.0.9', '1.6.1.2']:
             return self.keys_conversion[self.version][key]

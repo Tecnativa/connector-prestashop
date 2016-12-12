@@ -63,6 +63,8 @@ def delay_unlink(session, model_name, record_id, priority=20):
     """ Delay a job which delete a record on PrestaShop.
 
     Called on binding records."""
+    if session.context.get('connector_no_export'):
+        return
     model = session.env[model_name]
     record = model.browse(record_id)
     env = get_environment(session, model_name, record.backend_id.id)
@@ -78,6 +80,8 @@ def delay_unlink_all_bindings(session, model_name, record_id, priority=20):
     """ Delay a job which delete a record on PrestaShop.
 
     Called on binding records."""
+    if session.context.get('connector_no_export'):
+        return
     model = session.env[model_name]
     record = model.browse(record_id)
     for bind_record in record.prestashop_bind_ids:
