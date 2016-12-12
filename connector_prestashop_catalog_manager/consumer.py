@@ -199,7 +199,7 @@ def prestashop_product_combination_write(session, model_name,
         )
 
 
-def prestashop_product_combination_unlink(session, record_id):
+def prestashop_product_combination_unlink(session, record_id, **kwargs):
     # binding is deactivate when deactive a product variant
     ps_binding_product = session.env['prestashop.product.combination'].search([
         ('active', '=', False),
