@@ -271,8 +271,15 @@ class ProductCombinationMapper(ImportMapper):
 
 
 @prestashop
-class ProductCombinationOptionImporter(PrestashopImporter):
+class ProductCombinationOptionImporter(TranslatableRecordImporter):
     _model_name = 'prestashop.product.combination.option'
+    
+    _translatable_fields = {
+        'prestashop.product.combination.option': [
+            'name',
+            'public_name',
+        ],
+    }
 
     def _import_values(self, attribute_binding):
         record = self.prestashop_record
@@ -296,7 +303,10 @@ class ProductCombinationOptionImporter(PrestashopImporter):
 class ProductCombinationOptionMapper(ImportMapper):
     _model_name = 'prestashop.product.combination.option'
 
-    direct = []
+    direct = [
+        ('public_name', 'public_name'),
+        ('name', 'name'),
+    ]
 
     @mapping
     def backend_id(self, record):
@@ -305,35 +315,23 @@ class ProductCombinationOptionMapper(ImportMapper):
     @only_create
     @mapping
     def odoo_id(self, record):
-        name = self.name(record)
-        binding = self.env['product.attribute'].search(
-            [('name', '=', name)],
-            limit=1,
-        )
-        if binding:
-            return {'odoo_id': binding.id}
-
-    @mapping
-    def name(self, record):
-        name = None
-        if 'language' in record['name']:
+        name = record['name']
+        lang = 'en_US'
+        if isinstance(name, dict):
             language_binder = self.binder_for('prestashop.res.lang')
             languages = record['name']['language']
             if not isinstance(languages, list):
                 languages = [languages]
             for lang in languages:
-                erp_language = language_binder.to_odoo(
-                    lang['attrs']['id'])
-                if not erp_language:
-                    continue
-                if erp_language.code == 'en_US':
+                erp_language = language_binder.to_odoo(lang['attrs']['id'])
+                if erp_language:
+                    lang = erp_language.code
                     name = lang['value']
                     break
-            if name is None:
-                name = languages[0]['value']
-        else:
-            name = record['name']
-        return {'name': name}
+        binding = self.env['product.attribute'].with_context(
+            lang=lang).search([('name', '=', name)], limit=1)
+        if binding:
+            return {'odoo_id': binding.id}
 
 
 @prestashop
