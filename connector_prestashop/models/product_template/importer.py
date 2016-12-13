@@ -525,7 +525,7 @@ class ProductTemplateImporter(TranslatableRecordImporter):
             self.backend_record.id,
             prestashop_record['id'],
             image['id'],
-            priority=10,
+            priority=30,
             **kwargs
         )
 
