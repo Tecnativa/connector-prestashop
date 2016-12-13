@@ -496,8 +496,11 @@ def import_batch(session, model_name, backend_id, filters=None, **kwargs):
     """ Prepare a batch import of records from PrestaShop """
     backend = session.env['prestashop.backend'].browse(backend_id)
     env = backend.get_environment(model_name, session=session)
-    importer = env.get_connector_unit(BatchImporter)
-    importer.run(filters=filters, **kwargs)
+    ctx = env.session.context.copy()
+    ctx.update(kwargs)
+    with env.session.change_context(ctx):
+        importer = env.get_connector_unit(BatchImporter)
+        importer.run(filters=filters, **kwargs)
 
 
 @job(default_channel='root.prestashop')
@@ -506,5 +509,8 @@ def import_record(
     """ Import a record from PrestaShop """
     backend = session.env['prestashop.backend'].browse(backend_id)
     env = backend.get_environment(model_name, session=session)
-    importer = env.get_connector_unit(PrestashopImporter)
-    importer.run(prestashop_id, **kwargs)
+    ctx = env.session.context.copy()
+    ctx.update(kwargs)
+    with env.session.change_context(ctx):
+        importer = env.get_connector_unit(PrestashopImporter)
+        importer.run(prestashop_id, **kwargs)
