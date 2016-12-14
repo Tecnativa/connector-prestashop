@@ -329,5 +329,8 @@ def export_record(session, model_name, binding_id, fields=None, **kwargs):
     fields = None
     record = session.env[model_name].browse(binding_id)
     env = record.backend_id.get_environment(model_name, session=session)
-    exporter = env.get_connector_unit(PrestashopExporter)
-    return exporter.run(binding_id, fields=fields, **kwargs)
+    ctx = env.session.context.copy()
+    ctx.update(kwargs)
+    with env.session.change_context(ctx):
+        exporter = env.get_connector_unit(PrestashopExporter)
+        return exporter.run(binding_id, fields=fields, **kwargs)
