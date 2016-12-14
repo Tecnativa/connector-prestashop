@@ -21,7 +21,7 @@ class PrestashopDeleter(Deleter):
 
 @job(default_channel='root.prestashop')
 def export_delete_record(
-        session, model_name, backend_id, external_id, resource):
+        session, model_name, backend_id, external_id, resource, **kwargs):
     """ Delete a record on PrestaShop """
     backend = session.env['prestashop.backend'].browse(backend_id)
     env = backend.get_environment(model_name, session=session)
