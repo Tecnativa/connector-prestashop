@@ -302,7 +302,8 @@ class SaleOrderImporter(PrestashopImporter):
                 'order_id': binding.odoo_id.id,
                 'product_id': binding.odoo_id.carrier_id.product_id.id,
                 'price_unit': shipping_total,
-                'is_delivery': True
+                'is_delivery': True,
+                'product_uom': binding.odoo_id.carrier_id.product_id.uom_id.id,
             })
         binding.odoo_id.recompute()
 
@@ -427,6 +428,7 @@ class SaleOrderLineDiscountMapper(ImportMapper):
         return {
             'name': record['name'],
             'product_uom_qty': 1,
+            'product_uom': self.backend_record.discount_product_id.uom_id.id,
         }
 
     @mapping
