@@ -32,7 +32,6 @@ class PaymentModeBatchImporter(BatchImporter):
         journals = self.env['account.journal'].search(
             [('type', '=', 'bank'),
              ('company_id', '=', self.backend_record.company_id.id),
-             ('name', '=', record['payment'])
              ],
         )
         if len(journals) != 1:
