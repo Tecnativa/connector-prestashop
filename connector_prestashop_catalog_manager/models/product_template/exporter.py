@@ -189,7 +189,6 @@ class ProductTemplateExportMapper(TranslationPrestashopExportMapper):
         ('show_price', 'show_price'),
         ('online_only', 'online_only'),
         ('weight', 'weight'),
-        ('standard_price', 'wholesale_price'),
         (m2o_to_backend('default_shop_id'), 'id_shop_default'),
         ('always_available', 'active'),
         ('barcode', 'barcode'),
@@ -217,6 +216,12 @@ class ProductTemplateExportMapper(TranslationPrestashopExportMapper):
     def _get_factor_tax(self, tax):
         factor_tax = tax.price_include and (1 + tax.amount / 100) or 1.0
         return factor_tax
+
+    @mapping
+    def whosale_price(self, record):
+        """This is a computed field so we can't do that in direct mapper"""
+        standard_price = record.standard_price
+        return {'wholesale_price': standard_price}
 
     @mapping
     def list_price(self, record):
