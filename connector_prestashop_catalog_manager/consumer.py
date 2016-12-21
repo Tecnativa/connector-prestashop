@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl.html)
-
+from datetime import timedelta
 from openerp.addons.connector.event import (
     on_record_create,
     on_record_write,
@@ -235,17 +235,19 @@ def product_product_write(session, model_name, record_id, fields):
 
     if fields:
         for binding in record.prestashop_bind_ids:
-            priority = 20
+            kw = {
+                'priority': 20,
+                'connector_env_options': _get_shop_location(session),
+            }
             if 'default_on' in fields and fields['default_on']:
                 # PS has to uncheck actual default combination first
-                priority = 99
+                kw.update({'eta': timedelta(seconds=660)})
             export_record.delay(
                 session,
                 'prestashop.product.combination',
                 binding.id,
                 fields,
-                priority=priority,
-                connector_env_options=_get_shop_location(session)
+                **kw
             )
 
 
