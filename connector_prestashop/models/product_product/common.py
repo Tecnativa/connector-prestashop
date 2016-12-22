@@ -64,9 +64,9 @@ class ProductProduct(models.Model):
         for product in self:
             price = product.list_price + product.impact_price
             if 'uom' in self.env.context:
-                uom = product.uos_id or product.uom_id
-                price = uom._compute_price(
-                    product.uom_id.id, price, self.env.context['uom'])
+                if product.uom_id.id != self.env.context['uom']:
+                    price = product.uom_id._compute_price(
+                        product.uom_id.id, price, self.env.context['uom'])
             product.lst_price = price
 
     lst_price = fields.Float(
