@@ -70,10 +70,12 @@ class PrestashopProductTemplate(models.Model):
         string='Description',
         translate=True,
         help="HTML description from PrestaShop",
+        sanitize=False,
     )
     description_short_html = fields.Html(
         string='Short Description',
         translate=True,
+        sanitize=False,
     )
     date_add = fields.Datetime(
         string='Created at (in PrestaShop)',
