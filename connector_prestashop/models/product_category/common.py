@@ -40,7 +40,9 @@ class PrestashopProductCategory(models.Model):
         readonly=True
     )
     description = fields.Html(
-        string='Description', translate=True,
+        string='Description',
+        translate=True,
+        sanitize=False,
         help='HTML description from PrestaShop')
     link_rewrite = fields.Char(string='Friendly URL', translate=True)
     meta_description = fields.Char('Meta description', translate=True)
