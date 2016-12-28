@@ -208,6 +208,23 @@ class AddressImporter(PrestashopImporter):
         partner_model = self.env['res.partner']
         return partner_model.simple_vat_check(vat_country, vat_number)
 
+    def _join_address(self, binding):
+        parent = binding.parent_id
+        if len(parent.child_ids) == 1 and binding.name.find(parent.name) == 0:
+            old_parter = binding.odoo_id
+            vals = {
+                'street': old_parter.street or '',
+                'street2': old_parter.street2 or '',
+                'city': old_parter.city or '',
+                'comment': old_parter.comment or '',
+                'phone': old_parter.phone or '',
+                'mobile': old_parter.mobile or '',
+                'zip': old_parter.zip or '',
+                'odoo_id': binding.parent_id.id,
+            }
+            binding.with_context(connector_no_export=True).write(vals)
+            old_parter.unlink()
+
     def _after_import(self, binding):
         record = self.prestashop_record
         vat_number = None
@@ -231,6 +248,7 @@ class AddressImporter(PrestashopImporter):
                     record_id=binding.parent_id.id,
                     message=msg,
                 )
+        self._join_address(binding)
 
 
 @prestashop
