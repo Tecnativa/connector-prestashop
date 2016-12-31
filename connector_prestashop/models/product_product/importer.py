@@ -361,19 +361,21 @@ class ProductCombinationOptionValueMapper(ImportMapper):
     @only_create
     @mapping
     def odoo_id(self, record):
+        # Always come in english
+        name = record['name']
+        lang = 'en_US'
         attribute_binder = self.binder_for(
-            'prestashop.product.combination.option'
-        )
+            'prestashop.product.combination.option')
         attribute = attribute_binder.to_odoo(
             record['id_attribute_group'],
             unwrap=True
         )
         assert attribute
-        binding = self.env['product.attribute.value'].search(
-            [('name', '=', record['name']),
-             ('attribute_id', '=', attribute.id)],
-            limit=1,
-        )
+        binding = self.env['product.attribute.value'].with_context(
+            lang=lang).search([
+                ('name', '=', name),
+                ('attribute_id', '=', attribute.id)
+                ], limit=1)
         if binding:
             return {'odoo_id': binding.id}
 
