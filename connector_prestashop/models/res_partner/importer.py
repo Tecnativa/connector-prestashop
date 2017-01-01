@@ -124,7 +124,7 @@ class ResPartnerImporter(PrestashopImporter):
         ps_id = binder.to_backend(binding)
         self._dealy_partner_address(ps_id)
 
-    def _dealy_partner_address(self, id_customer, **kwargs):
+    def _delay_partner_address(self, id_customer, **kwargs):
         import_batch.delay(
             self.session,
             'prestashop.address',
