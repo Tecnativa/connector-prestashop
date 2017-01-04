@@ -115,7 +115,11 @@ class PrestashopBackend(models.Model):
         string='Stock location route',
         help='Select a custom stock route',
     )
-
+    team_id = fields.Many2one(
+        comodel_name='crm.team',
+        string='Sales Team',
+    )
+    
     @api.model
     def _default_pricelist_id(self):
         return self.env['product.pricelist'].search([], limit=1)
