@@ -112,7 +112,7 @@ class PrestashopBackend(models.Model):
     )
     stock_location_route_id = fields.Many2one(
         comodel_name='stock.location.route',
-        string='Shipping Product',
+        string='Stock location route',
         help='Select a custom stock route',
     )
 
