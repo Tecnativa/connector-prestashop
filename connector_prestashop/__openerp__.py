@@ -19,6 +19,7 @@
         "product_variant_supplierinfo",  # oca/product-variant
         # TODO: perhaps not needed:
         # "product_variant_cost_price",  # oca/product-variant
+        "stock",
     ],
     "external_dependencies": {
         'python': [
