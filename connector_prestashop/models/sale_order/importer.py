@@ -244,6 +244,12 @@ class SaleOrderMapper(ImportMapper):
                float(record['total_paid_tax_excl']))
         return {'total_amount_tax': tax}
 
+    @mapping
+    def sales_team(self, record):
+        if not self.backend_record.team_id:
+            return {}
+        return {'team_id': self.backend_record.team_id.id}
+
     def finalize(self, map_record, values):
         onchange = self.unit_for(SaleOrderOnChange)
         return onchange.play(values, values['prestashop_order_line_ids'])
