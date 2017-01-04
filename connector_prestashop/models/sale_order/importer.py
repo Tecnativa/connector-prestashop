@@ -424,9 +424,9 @@ class SaleOrderLineMapper(ImportMapper):
 
     @mapping
     def stock_location_route(self, record):
-        if not self.backend_record.stock_location_route_id.id:
+        if not self.backend_record.stock_location_route_id:
             return {}
-        return {'stock_location_route_id':
+        return {'route_id':
                     self.backend_record.stock_location_route_id.id}
 
 
