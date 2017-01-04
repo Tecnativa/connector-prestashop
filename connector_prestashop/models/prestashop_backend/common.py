@@ -110,6 +110,11 @@ class PrestashopBackend(models.Model):
         required=True,
         string='Shipping Product',
     )
+    stock_location_route_id = fields.Many2one(
+        comodel_name='stock.location.route',
+        string='Shipping Product',
+        help='Select a custom stock route',
+    )
 
     @api.model
     def _default_pricelist_id(self):

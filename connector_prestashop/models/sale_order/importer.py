@@ -416,6 +416,13 @@ class SaleOrderLineMapper(ImportMapper):
     def backend_id(self, record):
         return {'backend_id': self.backend_record.id}
 
+    @mapping
+    def stock_location_route(self, record):
+        if not self.backend_record.stock_location_route_id.id:
+            return {}
+        return {'stock_location_route_id':
+                    self.backend_record.stock_location_route_id.id}
+
 
 @prestashop
 class SaleOrderLineDiscountMapper(ImportMapper):
