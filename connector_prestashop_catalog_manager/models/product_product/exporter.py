@@ -162,13 +162,15 @@ class ProductCombinationExportMapper(TranslationPrestashopExportMapper):
 
     @mapping
     def associations(self, record):
-        associations = OrderedDict([
-            ('product_option_values',
-                {'product_option_value':
-                 self._get_product_option_value(record)}),
-            ('images', {'image': self._get_combination_image(record) or False})
-        ])
-        return {'associations': associations}
+        associations = [
+            ('product_option_values', {
+                'product_option_value': self._get_product_option_value(record)
+            }),
+        ]
+        images = self._get_combination_image(record)
+        if images:
+            associations.append(('images', {'image': images}))
+        return {'associations': OrderedDict(associations)}
 
 
 @prestashop
