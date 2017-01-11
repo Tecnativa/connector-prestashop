@@ -60,15 +60,8 @@ class TemplateMapper(ImportMapper):
     ]
 
     def _apply_taxes(self, tax, price):
-        if self.backend_record.taxes_included == tax.price_include:
-            return price
         factor_tax = tax.price_include and (1 + tax.amount / 100) or 1.0
-        if self.backend_record.taxes_included:
-            if not tax.price_include:
-                return price / factor_tax
-        else:
-            if tax.price_include:
-                return price * factor_tax
+        return price * factor_tax
 
     @mapping
     def list_price(self, record):
