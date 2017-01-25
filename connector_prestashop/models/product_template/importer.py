@@ -369,7 +369,8 @@ class ProductInventoryImporter(PrestashopImporter):
         qty = self._get_quantity(record)
         if qty < 0:
             qty = 0
-        if binding._name == 'prestashop.product.template':
+        if (binding._name == 'prestashop.product.template' and
+                    binding.odoo_id.product_variant_count == 1):
             products = binding.odoo_id.product_variant_ids
         else:
             products = binding.odoo_id
