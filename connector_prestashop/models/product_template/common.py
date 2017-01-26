@@ -116,7 +116,7 @@ class PrestashopProductTemplate(models.Model):
         for product_binding in self:
             new_qty = product_binding._prestashop_qty()
             if product_binding.quantity != new_qty:
-                product_binding.quantity = new_qty
+                product_binding.quantity = new_qty if new_qty >= 0.0 else 0.0
         return True
 
     def _prestashop_qty(self):
@@ -125,7 +125,8 @@ class PrestashopProductTemplate(models.Model):
             ('prestashop_synchronized', '=', True),
             ('usage', '=', 'internal'),
         ])
-        return self.with_context(location=locations.ids).qty_available
+        qty_available = self.with_context(location=locations.ids).qty_available
+        return qty_available - self.outgoing_qty
 
 
 @prestashop
