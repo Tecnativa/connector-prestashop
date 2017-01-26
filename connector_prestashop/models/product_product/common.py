@@ -160,13 +160,18 @@ class PrestashopProductCombination(models.Model):
     @api.multi
     def recompute_prestashop_qty(self):
         for product_binding in self:
-            if product_binding.quantity != product_binding.qty_available:
-                product_binding.quantity = product_binding.qty_available
+            locations = self.env['stock.location'].search([
+                ('id', 'child_of',
+                 self.backend_id.warehouse_id.lot_stock_id.id),
+                ('prestashop_synchronized', '=', True),
+                ('usage', '=', 'internal'),
+            ])
+            qty_available = product_binding.with_context(
+                location=locations.ids).qty_available
+            qty = qty_available - product_binding.outgoing_qty
+            if product_binding.quantity != qty:
+                product_binding.quantity = qty if qty >= 0.0 else 0.0
         return True
-
-    @api.model
-    def _prestashop_qty(self, product):
-        return product.qty_available
 
 
 class ProductAttribute(models.Model):
