@@ -159,13 +159,8 @@ class PrestashopProductCombination(models.Model):
 
     @api.multi
     def recompute_prestashop_qty(self):
+        locations = self[:1].backend_id.get_stock_locations()
         for product_binding in self:
-            locations = self.env['stock.location'].search([
-                ('id', 'child_of',
-                 self.backend_id.warehouse_id.lot_stock_id.id),
-                ('prestashop_synchronized', '=', True),
-                ('usage', '=', 'internal'),
-            ])
             qty_available = product_binding.with_context(
                 location=locations.ids).qty_available
             qty = qty_available - product_binding.outgoing_qty

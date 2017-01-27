@@ -301,6 +301,18 @@ class PrestashopBackend(models.Model):
         import_record(session, model_name, self.id, ext_id)
         return True
 
+    @api.multi
+    def get_stock_locations(self):
+        self.ensure_one()
+        if self.stock_location_id:
+            return self.stock_location_id
+        locations = self.env['stock.location'].search([
+            ('id', 'child_of',
+             self.warehouse_id.lot_stock_id.id),
+            ('prestashop_synchronized', '=', True),
+            ('usage', '=', 'internal'),
+        ])
+        return locations
 
 class PrestashopShopGroup(models.Model):
     _name = 'prestashop.shop.group'
