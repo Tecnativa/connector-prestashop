@@ -120,11 +120,7 @@ class PrestashopProductTemplate(models.Model):
         return True
 
     def _prestashop_qty(self):
-        locations = self.env['stock.location'].search([
-            ('id', 'child_of', self.backend_id.warehouse_id.lot_stock_id.id),
-            ('prestashop_synchronized', '=', True),
-            ('usage', '=', 'internal'),
-        ])
+        locations = self.backend_id.get_stock_locations()
         qty_available = self.with_context(location=locations.ids).qty_available
         return qty_available - self.outgoing_qty
 
