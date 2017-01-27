@@ -22,7 +22,7 @@
                 </form>
             </field>
         </record>
-        <act_window name="Active Products"
+        <act_window name="Active In PrestaShop"
                     res_model="active.deactive.products"
                     src_model="product.template"
                     view_mode="form"
@@ -49,7 +49,7 @@
                 </form>
             </field>
         </record>
-        <act_window name="Deactive Products"
+        <act_window name="Deactive In PrestaShop"
                     res_model="active.deactive.products"
                     src_model="product.template"
                     view_mode="form"
