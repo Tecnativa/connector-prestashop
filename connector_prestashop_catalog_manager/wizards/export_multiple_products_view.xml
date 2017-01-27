@@ -20,7 +20,7 @@
                 </form>
             </field>
         </record>
-        <act_window name="Export Products"
+        <act_window name="Export To PrestaShop"
                     res_model="export.multiple.products"
                     src_model="product.template"
                     view_mode="form"
@@ -33,7 +33,7 @@
             <field name="name">export.variant.stock.form</field>
             <field name="model">export.multiple.products</field>
             <field name="arch" type="xml">
-                <form string="Export variant stock">
+                <form string="Export Stock">
                     <footer>
                         <button name="export_variant_stock" type="object"
                                 string="Export" class="oe_highlight"/>
@@ -44,7 +44,7 @@
                 </form>
             </field>
         </record>
-        <act_window name="Export Products Stock"
+        <act_window name="Export Stock To PrestaShop"
                     res_model="export.multiple.products"
                     src_model="product.template"
                     view_mode="form"

@@ -19,7 +19,7 @@
                 </form>
             </field>
         </record>
-        <act_window name="Sync Products"
+        <act_window name="Sync Products With PrestaShop"
                     res_model="sync.products"
                     src_model="product.template"
                     view_mode="form"
