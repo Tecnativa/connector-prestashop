@@ -20,6 +20,7 @@
     'data': [
         'data/custom.info.template.csv',
         'data/cron.xml',
+        'security/ir.model.access.csv',
         'views/prestashop_model_view.xml',
     ]
 }
