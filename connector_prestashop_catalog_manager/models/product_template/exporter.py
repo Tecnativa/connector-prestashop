@@ -225,14 +225,11 @@ class ProductTemplateExportMapper(TranslationPrestashopExportMapper):
 
     @mapping
     def list_price(self, record):
-        dp_obj = self.env['decimal.precision']
-        precision = dp_obj.precision_get('Product Price')
         tax = record.taxes_id
         if tax.price_include and tax.amount_type == 'percent':
             return {
                 'price': str(
-                    round(record.list_price /
-                          self._get_factor_tax(tax), precision))
+                    round(record.list_price / self._get_factor_tax(tax)))
             }
         else:
             return {'price': str(record.list_price)}
