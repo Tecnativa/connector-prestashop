@@ -228,8 +228,7 @@ class ProductTemplateExportMapper(TranslationPrestashopExportMapper):
         tax = record.taxes_id
         if tax.price_include and tax.amount_type == 'percent':
             return {
-                'price': str(
-                    round(record.list_price / self._get_factor_tax(tax)))
+                'price': str(record.list_price / self._get_factor_tax(tax))
             }
         else:
             return {'price': str(record.list_price)}
