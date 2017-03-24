@@ -80,6 +80,7 @@ class ProductCombinationImporter(PrestashopImporter):
                         connector_no_export=True).write(
                         {'image_ids': [(6, 0, [x.id for x in images])]})
             except PrestaShopWebServiceError:
+                # TODO: don't we track anything here? Maybe a checkpoint?
                 pass
 
     def import_supplierinfo(self, binding):
@@ -262,11 +263,11 @@ class ProductCombinationMapper(ImportMapper):
     @only_create
     @mapping
     def odoo_id(self, record):
-        Propuct = self.env['product.product']
-        product = Propuct.search([
-            ('default_code', '=', record['reference'])
-        ])
-        if Propuct:
+        product = self.env['product.product'].search([
+            ('default_code', '=', record['reference']),
+            ('prestashop_bind_ids', '=', False),
+        ], limit=1)
+        if product:
             return {'odoo_id': product.id}
 
 

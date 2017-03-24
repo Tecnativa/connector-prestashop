@@ -26,7 +26,7 @@ except:
 # The secret.txt file must not be committed.
 # The API token will be used to record the requests with vcr, but will not be
 # stored in the fixtures files
-prestashop_url = 'http://localhost'
+prestashop_url = 'http://localhost:8080'
 token = 'xxx'
 filename = join(dirname(__file__), 'secret.txt')
 if not exists(filename):
@@ -41,14 +41,20 @@ if exists(filename):
         token = next(fp).strip()
 
 
-recorder = VCR(
-    record_mode='once',
-    cassette_library_dir=join(dirname(__file__), 'fixtures/cassettes'),
-    path_transformer=VCR.ensure_suffix('.yaml'),
-    match_on=['method', 'path', 'query'],
-    filter_headers=['Authorization'],
-    decode_compressed_response=True,
-)
+def get_recorder(**kw):
+    defaults = dict(
+        record_mode='once',
+        cassette_library_dir=join(dirname(__file__), 'fixtures/cassettes'),
+        path_transformer=VCR.ensure_suffix('.yaml'),
+        match_on=['method', 'path', 'query'],
+        filter_headers=['Authorization'],
+        decode_compressed_response=True,
+    )
+    defaults.update(kw)
+    return VCR(**defaults)
+
+
+recorder = get_recorder()
 
 
 @contextmanager
@@ -324,3 +330,27 @@ class PrestashopTransactionCase(common.TransactionCase):
     @staticmethod
     def xmltodict(xml):
         return xml2dict(xml)
+
+
+class ExportStockQuantityCase(PrestashopTransactionCase):
+
+    def setUp(self):
+        super(ExportStockQuantityCase, self).setUp()
+        self.sync_metadata()
+        self.base_mapping()
+        self.shop_group = self.env['prestashop.shop.group'].search([])
+        self.shop = self.env['prestashop.shop'].search([])
+
+    def _change_product_qty(self, product, qty):
+        location = (self.backend_record.stock_location_id or
+                    self.backend_record.warehouse_id.lot_stock_id)
+        vals = {
+            'location_id': location.id,
+            'product_id': product.id,
+            'new_quantity': qty,
+        }
+        qty_change = self.env['stock.change.product.qty'].create(vals)
+        qty_change.with_context(
+            active_id=product.id,
+            connector_no_export=True,
+        ).change_product_qty()
