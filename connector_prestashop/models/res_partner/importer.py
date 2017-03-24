@@ -122,16 +122,12 @@ class ResPartnerImporter(PrestashopImporter):
         super(ResPartnerImporter, self)._after_import(binding)
         binder = self.binder_for()
         ps_id = binder.to_backend(binding)
-        self._delay_partner_address(ps_id)
-
-    def _delay_partner_address(self, id_customer, **kwargs):
         import_batch.delay(
             self.session,
             'prestashop.address',
             self.backend_record.id,
-            filters={'filter[id_customer]': '%d' % (id_customer,)},
+            filters={'filter[id_customer]': '%d' % (ps_id,)},
             priority=10,
-            **kwargs
         )
 
 
@@ -248,22 +244,23 @@ def import_customers_since(
             'date': '1',
             'filter[date_upd]': '>[%s]' % since_date}
     now_fmt = fields.Datetime.now()
-    import_batch(
+    result = import_batch(
         session,
         'prestashop.res.partner.category',
         backend_id,
         filters,
         **kwargs
-    )
-    import_batch(
+    ) or ''
+    result += import_batch(
         session,
         'prestashop.res.partner',
         backend_id,
         filters,
         priority=15,
         **kwargs
-    )
+    ) or ''
 
     session.env['prestashop.backend'].browse(backend_id).write({
         'import_partners_since': now_fmt,
     })
+    return result

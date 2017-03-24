@@ -14,6 +14,7 @@ from ...unit.importer import (
     import_record,
     import_batch,
     PrestashopImporter,
+    PrestashopBaseImporter,
     TranslatableRecordImporter,
 )
 from openerp.addons.connector.unit.mapper import backend_to_m2o
@@ -264,15 +265,41 @@ class TemplateMapper(ImportMapper):
         mapper = self.unit_for(FeaturesProductImportMapper)
         return mapper.map_record(record).values(**self.options)
 
+    @mapping
+    def extras_manufacturer(self, record):
+        mapper = self.unit_for(ManufacturerProductImportMapper)
+        return mapper.map_record(record).values(**self.options)
+
 
 @prestashop
 class FeaturesProductImportMapper(ImportMapper):
-    # For extend in connector_prestashop_feature module, by this way we
-    # avoid have dependencies of other modules as product_custom_info
+    # To extend in connector_prestashop_feature module. In this way we
+    # dependencies on other modules like product_custom_info
     _model_name = 'prestashop.product.template'
 
     @mapping
     def extras_features(self, record):
+        return {}
+
+
+@prestashop
+class ManufacturerProductDependency(PrestashopBaseImporter):
+    # To extend in connector_prestashop_feature module. In this way we
+    # dependencies on other modules like product_manufacturer
+    _model_name = 'prestashop.product.template'
+
+    def import_manufacturer(self, manufacturer_id):
+        return
+
+
+@prestashop
+class ManufacturerProductImportMapper(ImportMapper):
+    # To extend in connector_prestashop_manufacturer module. In this way we
+    # dependencies on other modules like product_manufacturer
+    _model_name = 'prestashop.product.template'
+
+    @mapping
+    def extras_manufacturer(self, record):
         return {}
 
 
@@ -562,6 +589,12 @@ class ProductTemplateImporter(TranslatableRecordImporter):
     def _import_dependencies(self):
         self._import_default_category()
         self._import_categories()
+        self._import_manufacturer()
+
+    def _import_manufacturer(self):
+        self.unit_for(ManufacturerProductDependency).import_manufacturer(
+            self.prestashop_record.get('id_manufacturer')
+        )
 
     def get_template_model_id(self):
         ir_model = self.env['ir.model'].search([
@@ -607,25 +640,26 @@ def import_products(
     if since_date:
         filters = {'date': '1', 'filter[date_upd]': '>[%s]' % (since_date)}
     now_fmt = fields.Datetime.now()
-    import_batch(
+    result = import_batch(
         session,
         'prestashop.product.category',
         backend_id,
         filters,
         priority=15,
         **kwargs
-    )
-    import_batch(
+    ) or ''
+    result += import_batch(
         session,
         'prestashop.product.template',
         backend_id,
         filters,
         priority=15,
         **kwargs
-    )
+    ) or ''
     session.env['prestashop.backend'].browse(backend_id).write({
         'import_products_since': now_fmt
     })
+    return result
 
 
 @prestashop

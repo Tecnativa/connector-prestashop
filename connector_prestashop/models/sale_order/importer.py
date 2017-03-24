@@ -219,6 +219,11 @@ class SaleOrderMapper(ImportMapper):
         return {'pricelist_id': self.backend_record.pricelist_id.id}
 
     @mapping
+    def sale_team(self, record):
+        if self.backend_record.sale_team_id:
+            return {'team_id': self.backend_record.sale_team_id.id}
+
+    @mapping
     def backend_id(self, record):
         return {'backend_id': self.backend_record.id}
 
@@ -296,21 +301,21 @@ class SaleOrderImporter(PrestashopImporter):
                 # we ignore it, the order line will be imported without product
                 _logger.error('PrestaShop product %s could not be imported, '
                               'error: %s', row['product_id'], err)
-                self.line_template_errors.append(row)
+                self.line_template_errors.push(row)
 
     def _add_shipping_line(self, binding):
         shipping_total = (binding.total_shipping_tax_included
                           if self.backend_record.taxes_included
                           else binding.total_shipping_tax_excluded)
-        if shipping_total:
-            sale_line_obj = self.session.env['sale.order.line']
-            sale_line_obj.create({
-                'order_id': binding.odoo_id.id,
-                'product_id': binding.odoo_id.carrier_id.product_id.id,
-                'price_unit': shipping_total,
-                'is_delivery': True,
-                'product_uom': binding.odoo_id.carrier_id.product_id.uom_id.id,
-            })
+        # when we have a carrier_id, even with a 0.0 price,
+        # Odoo will adda a shipping line in the SO when the picking
+        # is done, so we better add the line directly even when the
+        # price is 0.0
+        if binding.odoo_id.carrier_id:
+            binding.odoo_id._create_delivery_line(
+                binding.odoo_id.carrier_id,
+                shipping_total
+            )
         binding.odoo_id.recompute()
 
     def _after_import(self, binding):
@@ -484,7 +489,7 @@ def import_orders_since(session, backend_id, since_date=None, **kwargs):
     filters = None
     if since_date:
         filters = {'date': '1', 'filter[date_upd]': '>[%s]' % (since_date)}
-    import_batch(
+    result = import_batch(
         session,
         'prestashop.sale.order',
         backend_id,
@@ -510,3 +515,4 @@ def import_orders_since(session, backend_id, since_date=None, **kwargs):
     backend_record.write({
         'import_orders_since': now_fmt
     })
+    return result
