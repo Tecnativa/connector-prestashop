@@ -124,7 +124,7 @@ class PrestashopBackend(models.Model):
         comodel_name='crm.team',
         string='Sales Team',
     )
-    
+
     @api.model
     def _default_pricelist_id(self):
         return self.env['product.pricelist'].search([], limit=1)
@@ -309,15 +309,14 @@ class PrestashopBackend(models.Model):
     @api.multi
     def get_stock_locations(self):
         self.ensure_one()
-        if self.stock_location_id:
-            return self.stock_location_id
         locations = self.env['stock.location'].search([
-            ('id', 'child_of',
-             self.warehouse_id.lot_stock_id.id),
+            ('id', 'child_of', self.stock_location_id.id or
+                self.warehouse_id.lot_stock_id.id),
             ('prestashop_synchronized', '=', True),
             ('usage', '=', 'internal'),
         ])
         return locations
+
 
 class PrestashopShopGroup(models.Model):
     _name = 'prestashop.shop.group'

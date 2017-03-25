@@ -301,7 +301,7 @@ class SaleOrderImporter(PrestashopImporter):
                 # we ignore it, the order line will be imported without product
                 _logger.error('PrestaShop product %s could not be imported, '
                               'error: %s', row['product_id'], err)
-                self.line_template_errors.push(row)
+                self.line_template_errors.append(row)
 
     def _add_shipping_line(self, binding):
         shipping_total = (binding.total_shipping_tax_included
