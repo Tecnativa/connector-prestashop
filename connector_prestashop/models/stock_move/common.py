@@ -39,7 +39,7 @@ class StockQuant(models.Model):
         for quant in self:
             location = quant.location_id
             res = super(StockQuant, self).write(vals)
-            if location | quant.location_id >= ps_locations:
+            if (location | quant.location_id) & ps_locations:
                 quant.invalidate_cache()
                 quant.product_id.update_prestashop_qty()
         return res
@@ -65,7 +65,7 @@ class StockMove(models.Model):
             operations = self.mapped('linked_move_operation_ids.operation_id')
             products = operations.filtered(
                 lambda x: (
-                    x.location_id | x.location_dest_id >= ps_locations)
+                    (x.location_id | x.location_dest_id) & ps_locations)
             ).mapped('product_id')
             products.update_prestashop_qty()
         return res
