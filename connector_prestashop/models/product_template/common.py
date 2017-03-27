@@ -6,6 +6,9 @@ from openerp.addons.decimal_precision import decimal_precision as dp
 
 from ...unit.backend_adapter import GenericAdapter
 from ...backend import prestashop
+from openerp.addons.connector.session import ConnectorSession
+from ..product_template.exporter import export_inventory
+
 
 import logging
 
@@ -110,6 +113,30 @@ class PrestashopProductTemplate(models.Model):
         string='Cost Price',
         digits_compute=dp.get_precision('Product Price'),
     )
+
+    @api.multi
+    def force_export_stock(self):
+        session = ConnectorSession.from_env(self.env)
+        for template in self:
+            if template.product_variant_count > 1:
+                for binding in template.mapped(
+                        'product_variant_ids.prestashop_bind_ids'):
+                    export_inventory.delay(
+                        session,
+                        'prestashop.product.combination',
+                        binding.id,
+                        fields=['quantity'],
+                        priority=20
+                    )
+            else:
+                for binding in template.prestashop_bind_ids:
+                    export_inventory.delay(
+                        session,
+                        'prestashop.product.template',
+                        binding.id,
+                        fields=['quantity'],
+                        priority=20
+                    )
 
     @api.multi
     def recompute_prestashop_qty(self):
