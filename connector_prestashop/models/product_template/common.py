@@ -144,6 +144,11 @@ class PrestashopProductTemplate(models.Model):
             new_qty = product_binding._prestashop_qty()
             if product_binding.quantity != new_qty:
                 product_binding.quantity = new_qty if new_qty >= 0.0 else 0.0
+            # Recompute variants if is needed
+            if product_binding.product_variant_count > 1:
+                for variant in product_binding.mapped(
+                        'product_variant_ids.prestashop_bind_ids'):
+                    variant.recompute_prestashop_qty()
         return True
 
     def _prestashop_qty(self):
