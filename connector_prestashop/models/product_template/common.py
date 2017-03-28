@@ -148,7 +148,7 @@ class PrestashopProductTemplate(models.Model):
             if product_binding.product_variant_count > 1:
                 for variant in product_binding.mapped(
                         'product_variant_ids.prestashop_bind_ids'):
-                    variant.recompute_prestashop_qty
+                    variant.recompute_prestashop_qty()
         return True
 
     def _prestashop_qty(self):
