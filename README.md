@@ -21,7 +21,7 @@ This module is based on modules in other repositories :
 - https://github.com/OCA/product-attribute.git
 - https://github.com/OCA/e-commerce.git
 - https://github.com/OCA/sale-workflow.git
- 
+
 
 Getting started
 ---------------
@@ -29,7 +29,7 @@ Getting started
 - install the module prestashoperpconnect
   - settings -> modules
   - choose your country accounting
-- install the module  account_accountant 
+- install the module  account_accountant
 - configure the chart of account (it seems that it is not required anymore with ocb branches)
   - in settings -> configuration -> Accounting -> Chart of account
   - set the template for your country
@@ -59,8 +59,8 @@ Available addons
 ----------------
 addon | version | summary
 --- | --- | ---
-[connector_prestashop](connector_prestashop/) | 9.0.1.0.6 | PrestaShop-Odoo connector
-[connector_prestashop_catalog_manager](connector_prestashop_catalog_manager/) | 9.0.1.0.3 | Prestashop-Odoo Catalog Manager
+[connector_prestashop](connector_prestashop/) | 9.0.1.0.3 | PrestaShop-Odoo connector
+[connector_prestashop_catalog_manager](connector_prestashop_catalog_manager/) | 9.0.1.0.2 | Prestashop-Odoo Catalog Manager
 [connector_prestashop_manufacturer](connector_prestashop_manufacturer/) | 9.0.1.0.0 | Import manufacturers from PrestaShop
 
 
