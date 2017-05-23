@@ -142,7 +142,8 @@ class PrestashopProductTemplate(models.Model):
                 _('No internal location found to compute the product '
                   'quantity.')
             )
-        return self.with_context(location=locations.ids).qty_available
+        self_c = self.with_context(location=locations.ids, compute_child=False)
+        return self_c.qty_available
 
     @job(default_channel='root.prestashop')
     def import_products(self, backend, since_date=None, **kwargs):
