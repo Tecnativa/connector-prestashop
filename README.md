@@ -1,5 +1,5 @@
-[![Build Status](https://travis-ci.org/OCA/connector-prestashop.svg?branch=10.0)](https://travis-ci.org/OCA/connector-prestashop)
-[![Coverage Status](https://coveralls.io/repos/OCA/connector-prestashop/badge.png?branch=10.0)](https://coveralls.io/r/OCA/connector-prestashop?branch=10.0)
+[![Build Status](https://travis-ci.org/OCA/connector-prestashop.svg?branch=9.0)](https://travis-ci.org/OCA/connector-prestashop)
+[![Coverage Status](https://coveralls.io/repos/OCA/connector-prestashop/badge.png?branch=9.0)](https://coveralls.io/r/OCA/connector-prestashop?branch=9.0)
 
 prestashoperpconnect
 ====================
@@ -55,13 +55,19 @@ Getting started
 
 [//]: # (addons)
 
+Available addons
+----------------
+addon | version | summary
+--- | --- | ---
+[connector_prestashop](connector_prestashop/) | 9.0.1.0.6 | PrestaShop-Odoo connector
+[connector_prestashop_catalog_manager](connector_prestashop_catalog_manager/) | 9.0.1.0.3 | Prestashop-Odoo Catalog Manager
+[connector_prestashop_manufacturer](connector_prestashop_manufacturer/) | 9.0.1.0.0 | Import manufacturers from PrestaShop
+
+
 Unported addons
 ---------------
 addon | version | summary
 --- | --- | ---
-[connector_prestashop](connector_prestashop/) | 9.0.1.0.3 (unported) | PrestaShop-Odoo connector
-[connector_prestashop_catalog_manager](connector_prestashop_catalog_manager/) | 9.0.1.0.2 (unported) | Prestashop-Odoo Catalog Manager
 [connector_prestashop_customize_example](connector_prestashop_customize_example/) | 8.0.1.0.0 (unported) | Prestashop Connector Customization Example
-[connector_prestashop_manufacturer](connector_prestashop_manufacturer/) | 9.0.1.0.0 (unported) | Import manufacturers from PrestaShop
 
 [//]: # (end addons)
