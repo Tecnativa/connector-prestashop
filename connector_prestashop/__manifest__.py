@@ -11,6 +11,7 @@
     "license": "AGPL-3",
     "depends": [
         "account",
+        "base_vat",  # for vat validation on partner address
         "product",
         "product_multi_category",  # oca/product-attribute
         "connector_ecommerce",  # oca/connector-ecommerce
@@ -37,10 +38,10 @@
               "Odoo Community Association (OCA)",
     "website": "https://github.com/OCA/connector-prestashop",
     "category": "Connector",
-    'demo': [
+    "demo": [
         'demo/backend.xml',
     ],
-    'data': [
+    "data": [
         'data/cron.xml',
         'data/product_decimal_precision.xml',
         'views/prestashop_model_view.xml',
@@ -57,6 +58,6 @@
         'security/prestashop_security.xml',
         'data/ecommerce_data.xml',
     ],
-    'installable': True,
+    "installable": True,
     "application": True,
 }
