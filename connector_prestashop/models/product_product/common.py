@@ -31,7 +31,8 @@ class ProductProduct(models.Model):
     @api.multi
     def update_prestashop_qty(self):
         for product in self:
-            if product.product_variant_count > 1:
+            if (product.product_variant_count > 1 or
+                    product.attribute_line_ids):
                 # Recompute qty in combination binding
                 for combination_binding in product.prestashop_bind_ids:
                     combination_binding.recompute_prestashop_qty()
@@ -46,7 +47,8 @@ class ProductProduct(models.Model):
         for product in self:
             product_template = product.product_tmpl_id
             prestashop_combinations = (
-                len(product_template.product_variant_ids) > 1 and
+                len(product_template.product_variant_ids) > 1 or
+                product_template.attribute_line_ids and
                 product_template.product_variant_ids) or []
             if not prestashop_combinations:
                 for prestashop_product in product_template.prestashop_bind_ids:

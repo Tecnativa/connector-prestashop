@@ -118,7 +118,8 @@ class PrestashopProductTemplate(models.Model):
     def force_export_stock(self):
         session = ConnectorSession.from_env(self.env)
         for template in self:
-            if template.product_variant_count > 1:
+            if (template.product_variant_count > 1 or
+                    template.attribute_line_ids):
                 for binding in template.mapped(
                         'product_variant_ids.prestashop_bind_ids'):
                     export_inventory.delay(
@@ -145,7 +146,8 @@ class PrestashopProductTemplate(models.Model):
             if product_binding.quantity != new_qty:
                 product_binding.quantity = new_qty if new_qty >= 0.0 else 0.0
             # Recompute variants if is needed
-            if product_binding.product_variant_count > 1:
+            if (product_binding.product_variant_count > 1 or
+                    product_binding.attribute_line_ids):
                 for variant in product_binding.mapped(
                         'product_variant_ids.prestashop_bind_ids'):
                     variant.recompute_prestashop_qty()
