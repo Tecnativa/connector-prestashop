@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl.html)
 
-from odoo.addons.connector.unit.mapper import (
-    ImportMapper,
+from odoo.addons.connector.components.mapper import (
     mapping,
     only_create,
 )
@@ -43,7 +42,7 @@ class TaxGroupImporter(Component):
     _inherit = 'prestashop.importer'
     _apply_on = 'prestashop.account.tax.group'
 
-    _model_name = 'prestashop.account.tax.group'
+#     _model_name = 'prestashop.account.tax.group'
 
 
 class TaxGroupBatchImporter(Component):
@@ -51,4 +50,4 @@ class TaxGroupBatchImporter(Component):
     _inherit = 'prestashop.direct.batch.importer'
     _apply_on = 'prestashop.account.tax.group'
 
-    _model_name = 'prestashop.account.tax.group'
+#     _model_name = 'prestashop.account.tax.group'

@@ -4,8 +4,7 @@
 
 from odoo import fields, models
 
-from ...components.backend_adapter import GenericAdapter
-from ...backend import prestashop
+from odoo.addons.component.core import Component
 
 
 class PrestashopResCountry(models.Model):
@@ -32,8 +31,8 @@ class ResCountry(models.Model):
         string='prestashop Bindings',
     )
 
-
-@prestashop
-class ResCountryAdapter(GenericAdapter):
-    _model_name = 'prestashop.res.country'
+class ResCountryAdapter(Component):
+    _name = 'prestashop.res.country.adapter'
+    _inherit = 'prestashop.adapter'
+    _apply_on = 'prestashop.res.country'
     _prestashop_model = 'countries'

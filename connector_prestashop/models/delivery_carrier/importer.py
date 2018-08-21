@@ -2,7 +2,7 @@
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl.html)
 
 import logging
-from odoo.addons.connector.unit.mapper import mapping, ImportMapper
+from odoo.addons.connector.components.mapper import mapping, only_create
 from odoo.addons.component.core import Component
 
 _logger = logging.getLogger(__name__)
@@ -25,19 +25,36 @@ class CarrierImportMapper(Component):
     direct = [
         ('name', 'name_ext'),
         ('name', 'name'),
-        ('id_reference', 'id_reference'),
     ]
+
+    @only_create
+    @mapping
+    def odoo_id(self, record):
+        """
+        Prevent The duplication of delivery method if id_reference is the same
+        Has to be improved
+        """ 
+        id_reference = int(str(record['id_reference']))
+        ps_delivery = self.env['prestashop.delivery.carrier'].search([
+            ('id_reference', '=', id_reference),
+            ('backend_id', '=', self.backend_record.id)])
+        _logger.debug("Found delivery %s for reference %s" % (ps_delivery, id_reference))
+        if len(ps_delivery) == 1 :
+            #Temporary defensive mode so that only a single delivery method still available
+            delivery = ps_delivery.odoo_id
+            ps_delivery.unlink()
+            return {'odoo_id': delivery.id}
+        else:
+            return {}  
+
+    @mapping
+    def id_reference(self, record):
+        id_reference = int(str(record['id_reference']))
+        return {'id_reference': id_reference}
 
     @mapping
     def active(self, record):
         return {'active_ext': record['active'] == '1'}
-
-    @mapping
-    def product_id(self, record):
-        if self.backend_record.shipping_product_id:
-            return {'product_id': self.backend_record.shipping_product_id.id}
-        product = self.env.ref('connector_ecommerce.product_product_shipping')
-        return {'product_id': product.id}
 
     @mapping
     def backend_id(self, record):

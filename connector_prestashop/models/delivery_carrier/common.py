@@ -37,15 +37,11 @@ class PrestashopDeliveryCarrier(models.Model):
     export_tracking = fields.Boolean(
         string='Export tracking numbers to PrestaShop',
     )
-
-    def import_carriers(self, backend, **kwargs):
-        return import_batch(
-            session,
-            'prestashop.delivery.carrier',
-            backend_id,
-            priority=5,
-            **kwargs
-        )
+    
+    _sql_constraints = [
+        ('prestashop_erp_uniq', 'unique(backend_id, odoo_id, id_reference)',
+         'An ERP record with same ID already exists on PrestaShop with the same id_reference'),
+    ]
 
 
 class DeliveryCarrier(models.Model):

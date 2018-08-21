@@ -5,9 +5,8 @@ from odoo import _, fields
 
 from odoo.addons.connector.exception import MappingError
 from odoo.addons.queue_job.job import job
-from odoo.addons.connector.unit.mapper import (
+from odoo.addons.connector.components.mapper import (
     mapping,
-    ImportMapper,
     only_create,
 )
 from ...components.importer import (
@@ -36,8 +35,7 @@ class RefundImporter(Component):
             invoice.signal_workflow('invoice_open')
         else:
             self.backend_record.add_checkpoint(
-                model='account.invoice',
-                record_id=invoice.id,
+                invoice, 
                 message=_('The refund for order %s has a different amount '
                           'in PrestaShop and in Odoo.') % invoice.origin
             )
@@ -252,23 +250,3 @@ class RefundBatchImporter(Component):
     _apply_on = 'prestashop.refund'
 
     _model_name = 'prestashop.refund'
-
-
-# TODO: Move it
-@job(default_channel='root.prestashop')
-def import_refunds(session, backend_id, since_date, **kwargs):
-    filters = None
-    if since_date:
-        filters = {'date': '1', 'filter[date_upd]': '>[%s]' % (since_date)}
-    now_fmt = fields.Datetime.now()
-    result = import_batch(
-        session,
-        'prestashop.refund',
-        backend_id,
-        filters,
-        **kwargs
-    )
-    session.env['prestashop.backend'].browse(backend_id).write({
-        'import_refunds_since': now_fmt
-    })
-    return result

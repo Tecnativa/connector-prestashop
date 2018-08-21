@@ -7,9 +7,8 @@ from odoo import _, api, exceptions, fields, models
 from odoo.addons import decimal_precision as dp
 
 from odoo.addons.queue_job.job import job
-from ...components.backend_adapter import GenericAdapter
-from ...backend import prestashop
-from exporter import ProductInventoryExporter
+from odoo.addons.component.core import Component
+from odoo.addons.component_event import skip_if
 
 import logging
 
@@ -43,7 +42,7 @@ class ProductTemplate(models.Model):
             template.mapped('prestashop_bind_ids').recompute_prestashop_qty()
             # Recompute variant PrestaShop qty
             template.mapped(
-                'product_variant_ids.prestashop_bind_ids'
+                'product_variant_ids.prestashop_combination_bind_ids'
             ).recompute_prestashop_qty()
         return True
 
@@ -112,6 +111,12 @@ class PrestashopProductTemplate(models.Model):
         string='Cost Price',
         digits=dp.get_precision('Product Price'),
     )
+    out_of_stock = fields.Selection(
+            [('0', 'Refuse order'),
+             ('1', 'Accept order'),
+             ('2', 'Default prestashop')],
+            string='If stock shortage'
+        )
 
     @api.multi
     def recompute_prestashop_qty(self):
@@ -131,11 +136,13 @@ class PrestashopProductTemplate(models.Model):
         self_loc = self.with_context(location=locations.ids,
                                      compute_child=False)
         for product in self_loc:
-            new_qty = product._prestashop_qty()
-            if product.quantity != new_qty:
-                product.quantity = new_qty
+            if product.type == 'product':
+                new_qty = product._prestashop_qty()
+                if product.quantity != new_qty:
+                    product.quantity = new_qty
         return True
 
+    @api.multi
     def _prestashop_qty(self):
         return self.qty_available
 
@@ -145,19 +152,49 @@ class PrestashopProductTemplate(models.Model):
             filters = {'date': '1', 'filter[date_upd]': '>[%s]' % (since_date)}
         now_fmt = fields.Datetime.now()
 
-        result = self.env['prestashop.product.category'].with_delay(
-            priority=10).import_batch(backend, filters=filters) or ''
+        self.env['prestashop.product.category'].with_delay(
+            priority=10).import_batch(backend, filters=filters)
 
-        result += self.env['prestashop.product.template'].with_delay(
-            priority=15).import_batch(backend, filters=filters) or ''
+        self.env['prestashop.product.template'].with_delay(
+            priority=15).import_batch(backend, filters=filters)
 
         backend.import_products_since = now_fmt
-        return result
+        return True
+
+    @job(default_channel='root.prestashop')
+    def import_inventory(self, backend):
+        with backend.work_on('_import_stock_available') as work:
+            importer = work.component(usage='batch.importer')
+            return importer.run()
 
 
-@prestashop
-class ProductInventoryAdapter(GenericAdapter):
-    _model_name = '_import_stock_available'
+    @job(default_channel='root.prestashop')
+    def export_inventory(self, fields=None):
+        """ Export the inventory configuration and quantity of a product. """
+        backend = self.backend_id
+        with backend.work_on('prestashop.product.template') as work:
+            exporter = work.component(usage='inventory.exporter')
+            return exporter.run(self, fields)
+
+
+    @job(default_channel='root.prestashop')
+    def export_product_quantities(self, backend=None):
+        self.search([('backend_id', '=', backend.id)]
+            ).recompute_prestashop_qty()
+
+
+class TemplateAdapter(Component):
+    _name = 'prestashop.product.template.adapter'
+    _inherit = 'prestashop.adapter'
+    _apply_on = 'prestashop.product.template'
+    _prestashop_model = 'products'
+    _export_node_name = 'product'
+
+
+class ProductInventoryAdapter(Component):
+    _name = '_import_stock_available.adapter'
+    _inherit = 'prestashop.adapter'
+    _apply_on = '_import_stock_available'
     _prestashop_model = 'stock_availables'
     _export_node_name = 'stock_available'
 
@@ -188,15 +225,22 @@ class ProductInventoryAdapter(GenericAdapter):
             res = client.get(self._prestashop_model, stock_id)
             first_key = res.keys()[0]
             stock = res[first_key]
-            stock['quantity'] = int(quantity)
+            stock['quantity'] = int(quantity['quantity'])
+            stock['out_of_stock'] = int(quantity['out_of_stock'])
             client.edit(self._prestashop_model, {
                 self._export_node_name: stock
             })
 
 
-@prestashop
-class PrestashopProductTags(GenericAdapter):
-    _model_name = '_prestashop_product_tag'
+class PrestashopProductTagsModel(models.TransientModel):
+    # In actual connector version is mandatory use a model
+    _name = '_prestashop_product_tag'
+
+
+class PrestashopProductTags(Component):
+    _name = 'prestashop.product.tag.adapter'
+    _inherit = 'prestashop.adapter'
+    _apply_on = '_prestashop_product_tag'
     _prestashop_model = 'tags'
     _export_node_name = 'tag'
 
@@ -209,3 +253,24 @@ class PrestashopProductTags(GenericAdapter):
         if isinstance(tags, dict):
             return [tags]
         return tags
+
+
+class PrestashopProductQuantityListener(Component):
+    _name = 'prestashop.product.quantity.listener'
+    _inherit = 'base.connector.listener'
+    _apply_on = ['prestashop.product.combination', 'prestashop.product.template']
+
+    def _get_inventory_fields(self):
+        # fields which should not trigger an export of the products
+        # but an export of their inventory
+        return ('quantity', 'out_of_stock')
+
+    @skip_if(lambda self, record, **kwargs: self.no_connector_export(record))
+    def on_record_write(self, record, fields=None):
+        inventory_fields = list(
+            set(fields).intersection(self._get_inventory_fields())
+        )
+        if inventory_fields:
+            record.with_delay(priority=20).export_inventory(
+                fields=inventory_fields
+            )

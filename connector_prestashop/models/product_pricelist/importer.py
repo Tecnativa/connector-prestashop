@@ -1,17 +1,13 @@
 # -*- coding: utf-8 -*-
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl.html)
 
-from odoo.addons.connector.unit.mapper import (
-    ImportMapper,
-    mapping,
-)
-from ...components.importer import TranslatableRecordImporter
-from ...backend import prestashop
+from odoo.addons.component.core import Component
+from odoo.addons.connector.components.mapper import mapping, external_to_m2o
 
-
-@prestashop
-class ProductPricelistMapper(ImportMapper):
-    _model_name = 'prestashop.groups.pricelist'
+class ProductPricelistMapper(Component):
+    _name = 'prestashop.groups.pricelist.mapper'
+    _inherit = 'prestashop.import.mapper'
+    _apply_on = 'prestashop.groups.pricelist'
 
     direct = [
         ('name', 'name'),
@@ -41,11 +37,13 @@ class ProductPricelistMapper(ImportMapper):
         return {'item_ids': [(5,), (0, 0, item)]}
 
 
-@prestashop
-class ProductPricelistImporter(TranslatableRecordImporter):
-    _model_name = [
-        'prestashop.groups.pricelist',
-    ]
+class ProductPricelistImporter(Component):
+    _name = 'prestashop.groups.pricelist.importer'
+    _inherit = 'prestashop.translatable.record.importer'
+    _apply_on = 'prestashop.groups.pricelist'
+
+    _usage= "Translate"
+
 
     _translatable_fields = {
         'prestashop.groups.pricelist': ['name'],

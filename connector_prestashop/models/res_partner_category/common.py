@@ -3,8 +3,7 @@
 
 from odoo import fields, models
 
-from ...components.backend_adapter import GenericAdapter
-from ...backend import prestashop
+from odoo.addons.component.core import Component
 
 
 class ResPartnerCategory(models.Model):
@@ -46,7 +45,8 @@ class PrestashopResPartnerCategory(models.Model):
     # check if we can drop this!
 
 
-@prestashop
-class PartnerCategoryAdapter(GenericAdapter):
-    _model_name = 'prestashop.res.partner.category'
+class PartnerCategoryAdapter(Component):
+    _name = 'prestashop.res.partner.category.adapter'
+    _inherit = 'prestashop.adapter'
+    _apply_on = 'prestashop.res.partner.category'
     _prestashop_model = 'groups'

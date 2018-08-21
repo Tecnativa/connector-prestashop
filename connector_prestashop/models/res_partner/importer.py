@@ -5,23 +5,18 @@ import re
 
 from odoo import fields, _
 from odoo.addons.queue_job.job import job
-from odoo.addons.connector.unit.mapper import (
-    ImportMapper,
-    mapping,
-    only_create,
-)
-from ...components.importer import (
-    PrestashopImporter,
-    import_batch,
-    DelayedBatchImporter,
-)
-from ...backend import prestashop
-from odoo.addons.connector.unit.mapper import external_to_m2o
 
 
-@prestashop
-class PartnerImportMapper(ImportMapper):
-    _model_name = 'prestashop.res.partner'
+from odoo.addons.connector.checkpoint import checkpoint
+from odoo.addons.component.core import Component
+from odoo.addons.connector.components.mapper import (
+    mapping, external_to_m2o, only_create)
+
+
+class PartnerImportMapper(Component):
+    _name = 'prestashop.res.partner.mapper'
+    _inherit = 'prestashop.import.mapper'
+    _apply_on = 'prestashop.res.partner'
 
     direct = [
         ('date_add', 'date_add'),
@@ -75,10 +70,6 @@ class PartnerImportMapper(ImportMapper):
         return result
 
     @mapping
-    def backend_id(self, record):
-        return {'backend_id': self.backend_record.id}
-
-    @mapping
     def lang(self, record):
         binder = self.binder_for('prestashop.res.lang')
         erp_lang = None
@@ -104,9 +95,10 @@ class PartnerImportMapper(ImportMapper):
         return {'company_id': self.backend_record.company_id.id}
 
 
-@prestashop
-class ResPartnerImporter(PrestashopImporter):
-    _model_name = 'prestashop.res.partner'
+class ResPartnerImporter(Component):
+    _name = 'prestashop.res.partner.importer'
+    _inherit = 'prestashop.importer'
+    _apply_on = 'prestashop.res.partner'
 
     def _import_dependencies(self):
         groups = self.prestashop_record.get('associations', {}) \
@@ -127,14 +119,16 @@ class ResPartnerImporter(PrestashopImporter):
             filters={'filter[id_customer]': '%d' % (ps_id,)})
 
 
-@prestashop
-class PartnerBatchImporter(DelayedBatchImporter):
-    _model_name = 'prestashop.res.partner'
+class PartnerBatchImporter(Component):
+    _name = 'prestashop.res.partner.batch.importer'
+    _inherit = 'prestashop.delayed.batch.importer'
+    _apply_on = 'prestashop.res.partner'
 
 
-@prestashop
-class AddressImportMapper(ImportMapper):
-    _model_name = 'prestashop.address'
+class AddressImportMapper(Component):
+    _name = 'prestashop.address.mappper'
+    _inherit = 'prestashop.import.mapper'
+    _apply_on = 'prestashop.address'
 
     direct = [
         ('address1', 'street'),
@@ -191,9 +185,10 @@ class AddressImportMapper(ImportMapper):
         return {'type': 'other'}
 
 
-@prestashop
-class AddressImporter(PrestashopImporter):
-    _model_name = 'prestashop.address'
+class AddressImporter(Component):
+    _name = 'prestashop.address.importer'
+    _inherit = 'prestashop.importer'
+    _apply_on = 'prestashop.address'
 
     def _check_vat(self, vat):
         vat_country, vat_number = vat[:2].lower(), vat[2:]
@@ -219,30 +214,12 @@ class AddressImporter(PrestashopImporter):
             else:
                 msg = _('Please, check the VAT number: %s') % vat_number
                 self.backend_record.add_checkpoint(
-                    model=binding.parent_id._name,
-                    record_id=binding.parent_id.id,
+                    binding.parent_id,
                     message=msg,
                 )
 
 
-@prestashop
-class AddressBatchImporter(DelayedBatchImporter):
-    _model_name = 'prestashop.address'
-
-
-@job(default_channel='root.prestashop')
-def import_customers_since(env, since_date=None, **kwargs):
-    """ Prepare the import of partners modified on PrestaShop """
-    filters = None
-    if since_date:
-        filters = {
-            'date': '1',
-            'filter[date_upd]': '>[%s]' % since_date}
-    now_fmt = fields.Datetime.now()
-    result = import_batch(env, filters, **kwargs) or ''
-    result += import_batch(env, filters, priority=15, **kwargs) or ''
-    env.backend_record.import_partners_since = now_fmt
-    # env['prestashop.backend'].browse(backend_id).write({
-    #     'import_partners_since': now_fmt,
-    # })
-    return result
+class AddressBatchImporter(Component):
+    _name = 'prestashop.address.batch.importer'
+    _inherit = 'prestashop.direct.batch.importer'
+    _apply_on = 'prestashop.address'
